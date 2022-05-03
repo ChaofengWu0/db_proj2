@@ -154,93 +154,12 @@ public class LoadOriginalData {
     }
 
 
-    private static void loadData_for_client_enterprise(String client_enterprise, String country, String
-            city, String supply_center, String industry
-    )
-            throws SQLException {
-        if (con != null) {
-            stmt0.setString(1, client_enterprise);
-            stmt0.setString(2, country);
-            stmt0.setString(3, city);
-            stmt0.setString(4, supply_center);
-            stmt0.setString(5, industry);
-            stmt0.addBatch();
-//                stmt.executeUpdate();
-        }
-    }
-
-
-    private static void loadData_for_model(String product_model, int unit_price, String
-            product_code, HashMap<String, Integer> map_for_table_model)
-            throws SQLException {
-        if (con != null) {
-            map_for_table_model.put(product_model, 1);
-            stmt3.setString(1, product_model);
-            stmt3.setInt(2, unit_price);
-            stmt3.setString(3, product_code);
-            stmt3.addBatch();
-        }
-    }
-
-
-    private static void loadData_for_staff(String staff, String name, int age,
-                                           String gender, String center, String mobile_number, String type)
-            throws SQLException {
-        if (con != null) {
-            stmt1.setString(1, staff);
-            stmt1.setString(2, name);
-            stmt1.setInt(3, age);
-            stmt1.setString(4, gender);
-            stmt1.setString(5, center);
-            stmt1.setString(6, mobile_number);
-            stmt1.setString(7, type);
-            stmt1.addBatch();
-        }
-    }
-
-    private static void loadData_for_product(String product_code, String
-            product_name, HashMap<String, Integer> map_for_table_pro)
-            throws SQLException {
-        if (con != null) {
-            if (map_for_table_pro.get(product_code) == null) {
-                map_for_table_pro.put(product_code, 1);
-                stmt4.setString(1, product_code);
-                stmt4.setString(2, product_name);
-//                stmt4.executeUpdate();
-                stmt4.addBatch();
-            }
-        }
-    }
-
-
-    private static void loadData_for_supply_center(String supply_center)
-            throws SQLException {
-        if (con != null) {
-            stmt5.setString(1, supply_center);
-            stmt5.setString(2, null);
-            stmt5.executeUpdate();
-//            con.commit();
-//            stmt5.addBatch();
-        }
-    }
-
-
-    private static void update_data_for_center(String center, String director
-    )
-            throws SQLException {
-        if (con != null) {
-            stmt2.setString(1, director);
-            stmt2.setString(2, center);
-            stmt2.executeUpdate();
-        }
-    }
-
-
     public static void main(String[] args) throws SQLException {
-        String fileName = null;
-        boolean verbose = false;
+        load_original_data();
 
+    }
 
+    public static void load_original_data() throws SQLException {
         if (propertyURL == null) {
             System.err.println("No configuration file (loader.cnf) found");
             System.exit(1);
@@ -458,6 +377,89 @@ public class LoadOriginalData {
 
         closeDB();
     }
+
+
+    private static void loadData_for_client_enterprise(String client_enterprise, String country, String
+            city, String supply_center, String industry
+    )
+            throws SQLException {
+        if (con != null) {
+            stmt0.setString(1, client_enterprise);
+            stmt0.setString(2, country);
+            stmt0.setString(3, city);
+            stmt0.setString(4, supply_center);
+            stmt0.setString(5, industry);
+            stmt0.addBatch();
+//                stmt.executeUpdate();
+        }
+    }
+
+
+    private static void loadData_for_model(String product_model, int unit_price, String
+            product_code, HashMap<String, Integer> map_for_table_model)
+            throws SQLException {
+        if (con != null) {
+            map_for_table_model.put(product_model, 1);
+            stmt3.setString(1, product_model);
+            stmt3.setInt(2, unit_price);
+            stmt3.setString(3, product_code);
+            stmt3.addBatch();
+        }
+    }
+
+
+    private static void loadData_for_staff(String staff, String name, int age,
+                                           String gender, String center, String mobile_number, String type)
+            throws SQLException {
+        if (con != null) {
+            stmt1.setString(1, staff);
+            stmt1.setString(2, name);
+            stmt1.setInt(3, age);
+            stmt1.setString(4, gender);
+            stmt1.setString(5, center);
+            stmt1.setString(6, mobile_number);
+            stmt1.setString(7, type);
+            stmt1.addBatch();
+        }
+    }
+
+    private static void loadData_for_product(String product_code, String
+            product_name, HashMap<String, Integer> map_for_table_pro)
+            throws SQLException {
+        if (con != null) {
+            if (map_for_table_pro.get(product_code) == null) {
+                map_for_table_pro.put(product_code, 1);
+                stmt4.setString(1, product_code);
+                stmt4.setString(2, product_name);
+//                stmt4.executeUpdate();
+                stmt4.addBatch();
+            }
+        }
+    }
+
+
+    private static void loadData_for_supply_center(String supply_center)
+            throws SQLException {
+        if (con != null) {
+            stmt5.setString(1, supply_center);
+            stmt5.setString(2, null);
+            stmt5.executeUpdate();
+//            con.commit();
+//            stmt5.addBatch();
+        }
+    }
+
+
+    private static void update_data_for_center(String center, String director
+    )
+            throws SQLException {
+        if (con != null) {
+            stmt2.setString(1, director);
+            stmt2.setString(2, center);
+            stmt2.executeUpdate();
+        }
+    }
+
 }
 
 
