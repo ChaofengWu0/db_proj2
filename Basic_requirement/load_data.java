@@ -319,7 +319,7 @@ public class LoadOriginalData {
                     center = parts1[1];
                     loadData_for_supply_center(center);
                 } else {
-                    center = parts1[1] + parts1[2];
+                    center = parts1[1] + "," + parts1[2];
                     loadData_for_supply_center(center);
                 }
             }
@@ -342,7 +342,7 @@ public class LoadOriginalData {
                         mobile_number = parts2[6];
                         type = parts2[7];
                     } else {
-                        center = parts2[5] + parts2[6];
+                        center = parts2[5] + "," + parts2[6];
                         mobile_number = parts2[7];
                         type = parts2[8];
                     }
@@ -408,7 +408,7 @@ public class LoadOriginalData {
                         center = parts4[4];
                         industry = parts4[5];
                     } else {
-                        center = parts4[4] + parts4[5];
+                        center = parts4[4] + "," + parts4[5];
                         industry = parts4[6];
                     }
                     loadData_for_client_enterprise(enterprise, country, city, center, industry);
