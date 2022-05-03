@@ -155,11 +155,6 @@ public class LoadOriginalData {
 
 
     public static void main(String[] args) throws SQLException {
-        load_original_data();
-
-    }
-
-    public static void load_original_data() throws SQLException {
         if (propertyURL == null) {
             System.err.println("No configuration file (loader.cnf) found");
             System.exit(1);
@@ -193,6 +188,15 @@ public class LoadOriginalData {
 
         openDB(prop.getProperty("host"), prop.getProperty("database"),
                 prop.getProperty("user"), prop.getProperty("password"));
+
+        load_original_data();
+        closeDB();
+
+
+    }
+
+    public static void load_original_data() throws SQLException {
+
 
         // 整个导入过程
         try {
@@ -373,9 +377,6 @@ public class LoadOriginalData {
             closeDB();
             System.exit(1);
         }
-
-
-        closeDB();
     }
 
 
