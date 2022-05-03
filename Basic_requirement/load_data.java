@@ -16,15 +16,27 @@ public class LoadOriginalData {
 
     private static Connection con = null;
 
+    //enterprise
     private static PreparedStatement stmt0 = null;
+    // staff
     private static PreparedStatement stmt1 = null;
+    // center (update)
     private static PreparedStatement stmt2 = null;
+    // model
     private static PreparedStatement stmt3 = null;
+    // product
     private static PreparedStatement stmt4 = null;
+    // center (insert)
     private static PreparedStatement stmt5 = null;
 
-    private static Statement statement = null;
+    // 用来往stock里面传数据
+    private static PreparedStatement stmt6 = null;
+    // 用来往order里面传数据
+    private static PreparedStatement stmt7 = null;
+    // 用来往contract里面传数据
+    private static PreparedStatement stmt8 = null;
 
+    private static Statement statement = null;
 
     private static boolean verbose = false;
 
@@ -127,7 +139,38 @@ public class LoadOriginalData {
             System.exit(1);
         }
 
+        try {
+            stmt6 = con.prepareStatement("insert into store(center,product_model,supply_staff,date,purchase_price,quantity) values" +
+                    "(?,?,?,?,?,?)");
+        } catch (SQLException e) {
+            System.err.println("Insert statement failed");
+            System.err.println(e.getMessage());
+            closeDB();
+            System.exit(1);
+        }
+
+        try {
+            stmt7 = con.prepareStatement("insert into order_table(contract_number,product_model,quantity,estimated_date,lodgement_date" +
+                    ",salesman_number) values(?,?,?,?,?,?)");
+        } catch (SQLException e) {
+            System.err.println("Insert statement failed");
+            System.err.println(e.getMessage());
+            closeDB();
+            System.exit(1);
+        }
+
+        try {
+            stmt8 = con.prepareStatement("insert into contract(contract_number,enterprise,contract_manager,contract_date,contract_type) " +
+                    "values(?,?,?,?,?)");
+        } catch (SQLException e) {
+            System.err.println("Insert statement failed");
+            System.err.println(e.getMessage());
+            closeDB();
+            System.exit(1);
+        }
+
     }
+
 
     private static void closeDB() {
         if (con != null) {
@@ -145,6 +188,10 @@ public class LoadOriginalData {
 
                 if (stmt5 != null) stmt5.close();
 
+                if (stmt6 != null) stmt6.close();
+
+                if (stmt7 != null) stmt7.close();
+
                 con.close();
                 con = null;
             } catch (Exception e) {
@@ -153,8 +200,7 @@ public class LoadOriginalData {
         }
     }
 
-
-    public static void main(String[] args) throws SQLException {
+    public static void main(String[] args) throws SQLException, IOException {
         if (propertyURL == null) {
             System.err.println("No configuration file (loader.cnf) found");
             System.exit(1);
@@ -176,7 +222,6 @@ public class LoadOriginalData {
         // Empty target table
         openDB(prop.getProperty("host"), prop.getProperty("database"),
                 prop.getProperty("user"), prop.getProperty("password"));
-//            Statement statement;
         if (con != null) {
             statement = con.createStatement();
             statement.execute("truncate table center,staff,enterprise " +
@@ -190,14 +235,182 @@ public class LoadOriginalData {
                 prop.getProperty("user"), prop.getProperty("password"));
 
         load_original_data();
+        stockIn();
+        placeOrder();
+
+
+
         closeDB();
-
-
     }
 
-    public static void load_original_data() throws SQLException {
+
+    private static void placeOrder() throws IOException, SQLException {
+        PreparedStatement statement1 = null;
+        PreparedStatement statement2 = null;
+        String address_for_place_order = "C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\task2_test_data_publish.csv";
+        BufferedReader br = Files.newBufferedReader(Paths.get(address_for_place_order));
+        br.readLine();
+
+        String contract_num, enterprise, product_model, contract_manger, contract_date,
+                estimated_delivery_date, lodgement_date, salesman_num, contract_type;
+        int quantity;
+
+        int store_quantity;
+        String now_center, now_type;
+
+        HashMap<String, Integer> map_for_table_con = new HashMap<>();
+
+        String line;
+        String[] parts;
+        int cnt = 0;
+        while ((line = br.readLine()) != null) {
+            parts = line.split(",");
+            contract_num = parts[0];
+            enterprise = parts[1];
+            product_model = parts[2];
+            quantity = Integer.parseInt(parts[3]);
+            contract_manger = parts[4];
+            contract_date = parts[5];
+            estimated_delivery_date = parts[6];
+            lodgement_date = parts[7];
+            salesman_num = parts[8];
+            contract_type = parts[9];
 
 
+            // 第一个检查，查订单中要求的数量和库存的数量
+            // 先利用statement1从enterprise中查到supply_center在哪
+            statement1 = con.prepareStatement("select center from enterprise where enterprise = ?");
+            statement1.setString(1, enterprise);
+            ResultSet check1_a = statement1.executeQuery();
+            check1_a.next();
+            if (check1_a.getRow() == 0) continue;
+            now_center = check1_a.getString("center");
+            statement2 = con.prepareStatement("select sum(quantity) as sum from store where center = ? and product_model = ?");
+            statement2.setString(1, now_center);
+            statement2.setString(2, product_model);
+            ResultSet check1_b = statement2.executeQuery();
+            check1_b.next();
+            if (check1_b.getRow() == 0) continue;
+            store_quantity = check1_b.getInt("sum");
+            if (store_quantity < quantity) continue;
+
+
+            // 第二个检查,查人员类型是不是salesman
+            statement1 = con.prepareStatement("select type from staff where staff = ?");
+            statement1.setString(1, salesman_num);
+            ResultSet check2 = statement1.executeQuery();
+            check2.next();
+            if (check2.getRow() == 0) continue;
+            now_type = check2.getString("type");
+            if (!now_type.equals("Salesman")) continue;
+
+            cnt++;
+            loadData_for_contract(contract_num, enterprise, contract_manger, contract_date, contract_type, map_for_table_con);
+            loadData_for_order(contract_num, product_model, quantity, estimated_delivery_date, lodgement_date, salesman_num);
+            if (cnt % BATCH_SIZE == 0) {
+                stmt8.executeBatch();
+                stmt7.executeBatch();
+                stmt8.clearBatch();
+                stmt7.clearBatch();
+            }
+        }
+        if (cnt != 0) {
+            stmt8.executeBatch();
+            stmt7.executeBatch();
+        }
+        con.commit();
+        stmt8.close();
+        stmt7.close();
+        if (statement1 != null)
+            statement1.close();
+        if (statement2 != null)
+            statement2.close();
+    }
+
+    // 目前采取的办法是把date作为主键的参考
+    private static void stockIn() throws IOException, SQLException {
+        PreparedStatement statement = null;
+        String address_for_stock = "C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\task1_in_stoke_test_data_publish.csv";
+        BufferedReader br = Files.newBufferedReader(Paths.get(address_for_stock));
+        br.readLine();
+
+        String[] parts;
+        String line;
+        String center;
+        String product_model;
+        String staff;
+        String date;
+        int price;
+        int quantity;
+        int cnt = 0;
+        while ((line = br.readLine()) != null) {
+            parts = line.split(",");
+            if (parts.length == 8) {
+                center = parts[1] + "," + parts[2];
+                product_model = parts[3];
+                staff = parts[4];
+                date = parts[5];
+                price = Integer.parseInt(parts[6]);
+                quantity = Integer.parseInt(parts[7]);
+            } else {
+                center = parts[1];
+                product_model = parts[2];
+                staff = parts[3];
+                date = parts[4];
+                price = Integer.parseInt(parts[5]);
+                quantity = Integer.parseInt(parts[6]);
+            }
+            // 第一个检查和第三个检查，供应中心与人员所在的供应中心对不上， 供应中心不存在
+            statement = con.prepareStatement("select center from staff where staff = ?");
+            statement.setString(1, staff);
+            ResultSet check1 = statement.executeQuery();
+            check1.next();
+            // 供应中心不存在
+            if (check1.getRow() == 0) continue;
+            String check_center = check1.getString("center");
+            // 供应中心与人员所在供应中心对不上
+            if (!check_center.equals(center)) continue;
+
+            // 第二个检查和第五个检查，人员类型不是"supply_staff", 人员不存在
+            statement = con.prepareStatement("select type from staff where staff = ?");
+            statement.setString(1, staff);
+            ResultSet check2 = statement.executeQuery();
+            check2.next();
+            // 人员不存在
+            if (check2.getRow() == 0) continue;
+            String check_type = check2.getString("type");
+            if (!check_type.equals("Supply Staff")) continue;
+
+            // 第四个检查, 产品不存在
+            statement = con.prepareStatement("select product_model from model where product_model = ?");
+            statement.setString(1, product_model);
+            ResultSet check3 = statement.executeQuery();
+            check3.next();
+            // 产品不存在
+            if (check3.getRow() == 0) continue;
+
+            // 接下来是其他的条件判断
+
+            // 如果supply_center和model同时在这张表内那就只增加库存的数量就可以了
+            // 先不合并试试
+            load_data_for_store(center, product_model, staff, date, price, quantity);
+            cnt++;
+            if (cnt % BATCH_SIZE == 0) {
+                stmt6.executeBatch();
+                stmt6.clearBatch();
+                cnt = 0;
+            }
+        }
+        if (cnt != 0) {
+            stmt6.executeBatch();
+        }
+        con.commit();
+        stmt6.close();
+        if (statement != null)
+            statement.close();
+    }
+
+    private static void load_original_data() throws SQLException {
         // 整个导入过程
         try {
             String address1 = "C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\center.csv";
@@ -461,6 +674,55 @@ public class LoadOriginalData {
         }
     }
 
-}
 
+    private static void load_data_for_store(String center, String product_model, String supply_staff, String date, int purchase_price
+            , int quantity)
+            throws SQLException {
+        if (con != null) {
+            stmt6.setString(1, center);
+            stmt6.setString(2, product_model);
+            stmt6.setString(3, supply_staff);
+            stmt6.setString(4, date);
+            stmt6.setInt(5, purchase_price);
+            stmt6.setInt(6, quantity);
+            stmt6.addBatch();
+        }
+    }
+
+
+    private static void loadData_for_contract(String contract_number, String enter_prise, String contract_manager, String
+            contract_date, String contract_type, HashMap<String, Integer> map_for_table_con)
+            throws SQLException {
+
+        if (con != null) {
+            if (map_for_table_con.get(contract_number) == null) {
+                map_for_table_con.put(contract_number, 1);
+                stmt8.setString(1, contract_number);
+                stmt8.setString(2, enter_prise);
+                stmt8.setString(3, contract_manager);
+                stmt8.setString(4, contract_date);
+                stmt8.setString(5, contract_type);
+                stmt8.addBatch();
+//                stmt8.execute();
+            }
+        }
+    }
+
+
+    private static void loadData_for_order(String contract_number, String product_model, int quantity, String estimated_date
+            , String lodgement_date, String salesman_number
+    )
+            throws SQLException {
+        if (con != null) {
+            stmt7.setString(1, contract_number);
+            stmt7.setString(2, product_model);
+            stmt7.setInt(3, quantity);
+            stmt7.setString(4, estimated_date);
+            stmt7.setString(5, lodgement_date);
+            stmt7.setString(6, salesman_number);
+            stmt7.addBatch();
+//            stmt7.execute();
+        }
+    }
+}
 
