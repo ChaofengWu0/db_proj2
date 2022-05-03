@@ -137,6 +137,8 @@ public class LoadOriginalData {
 
                 if (stmt1 != null) stmt1.close();
 
+                if (stmt2 != null) stmt2.close();
+
                 if (stmt3 != null) stmt3.close();
 
                 if (stmt4 != null) stmt4.close();
@@ -313,8 +315,11 @@ public class LoadOriginalData {
 // table1
             while ((line = br.readLine()) != null) {
                 parts1 = line.split(",");
-                if (parts1.length > 1) {
+                if (parts1.length == 2) {
                     center = parts1[1];
+                    loadData_for_supply_center(center);
+                } else {
+                    center = parts1[1] + parts1[2];
                     loadData_for_supply_center(center);
                 }
             }
@@ -331,12 +336,17 @@ public class LoadOriginalData {
                     age = Integer.parseInt(parts2[2]);
                     gender = parts2[3];
                     staff = parts2[4];
-                    center = parts2[5];
-                    mobile_number = parts2[6];
-                    type = parts2[7];
 
+                    if (parts2.length == 8) {
+                        center = parts2[5];
+                        mobile_number = parts2[6];
+                        type = parts2[7];
+                    } else {
+                        center = parts2[5] + parts2[6];
+                        mobile_number = parts2[7];
+                        type = parts2[8];
+                    }
                     loadData_for_staff(staff, name, age, gender, center, mobile_number, type);
-
                     if (type.equals("Director")) {
                         update_data_for_center(center, name);
                     }
@@ -394,9 +404,15 @@ public class LoadOriginalData {
                     enterprise = parts4[1];
                     country = parts4[2];
                     city = parts4[3];
-                    center = parts4[4];
-                    industry = parts4[5];
+                    if (parts4.length == 6) {
+                        center = parts4[4];
+                        industry = parts4[5];
+                    } else {
+                        center = parts4[4] + parts4[5];
+                        industry = parts4[6];
+                    }
                     loadData_for_client_enterprise(enterprise, country, city, center, industry);
+
                     if (cnt % BATCH_SIZE == 0) {
                         stmt0.executeBatch();
                         stmt0.clearBatch();
