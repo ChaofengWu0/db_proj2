@@ -1,3 +1,5 @@
+drop table center,staff,model,product,enterprise,contract,store,order_table;
+
 create table center
 (
     center   varchar
@@ -13,7 +15,7 @@ create table staff
     gender        varchar,
     center        varchar
         references center (center),
-    mobile_number varchar(11),
+    mobile_number varchar,
     type          varchar
 );
 
@@ -49,14 +51,14 @@ create table contract
         primary key,
     enterprise       varchar references enterprise (enterprise),
     contract_manager char(8),
-    contract_date    varchar,
-    contract_type    varchar
+    contract_date    varchar(10),
+    contract_type    varchar(10)
 );
 
 create table store
 (
     center         varchar,
-    product_model  varchar unique references model (product_model),
+    product_model  varchar references model (product_model),
     supply_staff   char(8) references staff (staff),
     date           varchar,
     purchase_price integer,
@@ -68,10 +70,9 @@ create table order_table
 (
     id              serial primary key,
     contract_number char(10) references contract (contract_number),
-    product_model   varchar references store (product_model),
+    product_model   varchar,
     quantity        integer,
-    estimated_date  varchar,
-    lodgement_date  varchar,
+    estimated_date  varchar(10),
+    lodgement_date  varchar(10),
     salesman_number char(8) references staff (staff)
 );
-C:\Users\86139\AppData\Roaming\JetBrains\DataGrip2021.3\consoles\db\f5501d61-76ef-4191-be55-5ade9d28234b\proj2\tables.sql
