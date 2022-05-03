@@ -63,7 +63,7 @@ create table store
     date           varchar,
     purchase_price integer,
     quantity       integer,
-    primary key (center, product_model, date)
+    primary key (center, product_model)
 );
 
 create table order_table
