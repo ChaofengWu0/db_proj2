@@ -1,3 +1,6 @@
+// Q1 这个196给的是center ， model都相同的是两个数据还是一个数据
+// Q2
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -238,7 +241,8 @@ public class LoadOriginalData {
         if (con != null) {
             statement = con.createStatement();
             statement.execute("truncate table center,staff,enterprise " +
-                    ",product,model,order_table,contract,store cascade");
+                    ",product,model,contract,store cascade");
+            statement.execute("TRUNCATE order_table RESTART IDENTITY");
             con.commit();
             statement.close();
         }
@@ -246,6 +250,7 @@ public class LoadOriginalData {
 
         openDB(prop.getProperty("host"), prop.getProperty("database"),
                 prop.getProperty("user"), prop.getProperty("password"));
+
 
         load_original_data();
         stockIn();
@@ -409,6 +414,11 @@ public class LoadOriginalData {
         stmt6.close();
         if (statement != null)
             statement.close();
+    }
+
+
+    private static void delete(String table_name) throws SQLException {
+
     }
 
 
@@ -739,8 +749,4 @@ public class LoadOriginalData {
             stmt9.executeUpdate();
         }
     }
-
-
 }
-
-
