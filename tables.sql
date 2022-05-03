@@ -15,7 +15,7 @@ create table staff
     gender        varchar,
     center        varchar
         references center (center),
-    mobile_number varchar,
+    mobile_number varchar(11),
     type          varchar
 );
 
