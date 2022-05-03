@@ -366,14 +366,22 @@ public class LoadOriginalData {
                 price = Integer.parseInt(parts[5]);
                 quantity = Integer.parseInt(parts[6]);
             }
-            // 第一个检查和第三个检查，供应中心与人员所在的供应中心对不上， 供应中心不存在
+            // 第一个检查和第三个检查，供应中心与人员所在的供应中心对不上， 供应中心不存在,人不存在
+            statement = con.prepareStatement("select center from center where center = ?");
+            statement.setString(1, center);
+            ResultSet check1_a = statement.executeQuery();
+            check1_a.next();
+            // 供应中心不存在
+            if (check1_a.getRow() == 0) continue;
+
+            // 人不存在
             statement = con.prepareStatement("select center from staff where staff = ?");
             statement.setString(1, staff);
-            ResultSet check1 = statement.executeQuery();
-            check1.next();
-            // 供应中心不存在
-            if (check1.getRow() == 0) continue;
-            String check_center = check1.getString("center");
+            ResultSet check1_b = statement.executeQuery();
+            check1_b.next();
+            if (check1_b.getRow()==0) continue;
+
+            String check_center = check1_b.getString("center");
             // 供应中心与人员所在供应中心对不上
             if (!check_center.equals(center)) continue;
 
@@ -749,4 +757,8 @@ public class LoadOriginalData {
             stmt9.executeUpdate();
         }
     }
+
+
 }
+
+
