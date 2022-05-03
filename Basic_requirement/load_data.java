@@ -35,6 +35,9 @@ public class LoadOriginalData {
     private static PreparedStatement stmt7 = null;
     // 用来往contract里面传数据
     private static PreparedStatement stmt8 = null;
+    // 在placeOrder方法中用来更新库存
+    private static PreparedStatement stmt9 = null;
+
 
     private static Statement statement = null;
 
@@ -169,6 +172,16 @@ public class LoadOriginalData {
             System.exit(1);
         }
 
+        try {
+            stmt9 = con.prepareStatement("update store set quantity = quantity + ? where center = ? and product_model = ? ;" +
+                    "update store set date = ? where center = ? and product_model = ?");
+        } catch (SQLException e) {
+            System.err.println("Insert statement failed");
+            System.err.println(e.getMessage());
+            closeDB();
+            System.exit(1);
+        }
+
     }
 
 
@@ -225,7 +238,7 @@ public class LoadOriginalData {
         if (con != null) {
             statement = con.createStatement();
             statement.execute("truncate table center,staff,enterprise " +
-                    ",product,model,order_table,contract,store");
+                    ",product,model,order_table,contract,store cascade");
             con.commit();
             statement.close();
         }
@@ -237,7 +250,6 @@ public class LoadOriginalData {
         load_original_data();
         stockIn();
         placeOrder();
-
 
 
         closeDB();
@@ -262,7 +274,6 @@ public class LoadOriginalData {
 
         String line;
         String[] parts;
-        int cnt = 0;
         while ((line = br.readLine()) != null) {
             parts = line.split(",");
             contract_num = parts[0];
@@ -285,13 +296,14 @@ public class LoadOriginalData {
             check1_a.next();
             if (check1_a.getRow() == 0) continue;
             now_center = check1_a.getString("center");
-            statement2 = con.prepareStatement("select sum(quantity) as sum from store where center = ? and product_model = ?");
+
+            statement2 = con.prepareStatement("select quantity from store where center = ? and product_model = ?");
             statement2.setString(1, now_center);
             statement2.setString(2, product_model);
             ResultSet check1_b = statement2.executeQuery();
             check1_b.next();
             if (check1_b.getRow() == 0) continue;
-            store_quantity = check1_b.getInt("sum");
+            store_quantity = check1_b.getInt("quantity");
             if (store_quantity < quantity) continue;
 
 
@@ -304,19 +316,9 @@ public class LoadOriginalData {
             now_type = check2.getString("type");
             if (!now_type.equals("Salesman")) continue;
 
-            cnt++;
             loadData_for_contract(contract_num, enterprise, contract_manger, contract_date, contract_type, map_for_table_con);
             loadData_for_order(contract_num, product_model, quantity, estimated_delivery_date, lodgement_date, salesman_num);
-            if (cnt % BATCH_SIZE == 0) {
-                stmt8.executeBatch();
-                stmt7.executeBatch();
-                stmt8.clearBatch();
-                stmt7.clearBatch();
-            }
-        }
-        if (cnt != 0) {
-            stmt8.executeBatch();
-            stmt7.executeBatch();
+            update_data_for_store(-quantity, now_center, product_model, lodgement_date);
         }
         con.commit();
         stmt8.close();
@@ -342,7 +344,6 @@ public class LoadOriginalData {
         String date;
         int price;
         int quantity;
-        int cnt = 0;
         while ((line = br.readLine()) != null) {
             parts = line.split(",");
             if (parts.length == 8) {
@@ -392,23 +393,24 @@ public class LoadOriginalData {
             // 接下来是其他的条件判断
 
             // 如果supply_center和model同时在这张表内那就只增加库存的数量就可以了
-            // 先不合并试试
-            load_data_for_store(center, product_model, staff, date, price, quantity);
-            cnt++;
-            if (cnt % BATCH_SIZE == 0) {
-                stmt6.executeBatch();
-                stmt6.clearBatch();
-                cnt = 0;
+            // 先不合并试试,事实证明需要合并
+            statement = con.prepareStatement("select quantity from store where center = ? and product_model = ?");
+            statement.setString(1, center);
+            statement.setString(2, product_model);
+            ResultSet check4 = statement.executeQuery();
+            check4.next();
+            if (check4.getRow() == 0) {
+                load_data_for_store(center, product_model, staff, date, price, quantity);
+            } else {
+                update_data_for_store(quantity, center, product_model, date);
             }
-        }
-        if (cnt != 0) {
-            stmt6.executeBatch();
         }
         con.commit();
         stmt6.close();
         if (statement != null)
             statement.close();
     }
+
 
     private static void load_original_data() throws SQLException {
         // 整个导入过程
@@ -685,7 +687,8 @@ public class LoadOriginalData {
             stmt6.setString(4, date);
             stmt6.setInt(5, purchase_price);
             stmt6.setInt(6, quantity);
-            stmt6.addBatch();
+//            stmt6.addBatch();
+            stmt6.execute();
         }
     }
 
@@ -693,7 +696,6 @@ public class LoadOriginalData {
     private static void loadData_for_contract(String contract_number, String enter_prise, String contract_manager, String
             contract_date, String contract_type, HashMap<String, Integer> map_for_table_con)
             throws SQLException {
-
         if (con != null) {
             if (map_for_table_con.get(contract_number) == null) {
                 map_for_table_con.put(contract_number, 1);
@@ -702,8 +704,7 @@ public class LoadOriginalData {
                 stmt8.setString(3, contract_manager);
                 stmt8.setString(4, contract_date);
                 stmt8.setString(5, contract_type);
-                stmt8.addBatch();
-//                stmt8.execute();
+                stmt8.execute();
             }
         }
     }
@@ -720,9 +721,26 @@ public class LoadOriginalData {
             stmt7.setString(4, estimated_date);
             stmt7.setString(5, lodgement_date);
             stmt7.setString(6, salesman_number);
-            stmt7.addBatch();
-//            stmt7.execute();
+            stmt7.execute();
         }
     }
+
+
+    private static void update_data_for_store(int delta, String center, String product_model, String date
+    )
+            throws SQLException {
+        if (con != null) {
+            stmt9.setInt(1, delta);
+            stmt9.setString(2, center);
+            stmt9.setString(3, product_model);
+            stmt9.setString(4, date);
+            stmt9.setString(5, center);
+            stmt9.setString(6, product_model);
+            stmt9.executeUpdate();
+        }
+    }
+
+
 }
+
 
