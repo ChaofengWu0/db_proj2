@@ -1,5 +1,7 @@
 // Q1 这个196给的是center ， model都相同的是两个数据还是一个数据
-// Q2
+// Q2 输出的格式是大致样子相同就好了吗
+// Q3 增删改查依据什么实现
+// Q4  Q11是什么意思
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -10,6 +12,7 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.Scanner;
 
 public class LoadOriginalData {
 
@@ -251,16 +254,22 @@ public class LoadOriginalData {
         openDB(prop.getProperty("host"), prop.getProperty("database"),
                 prop.getProperty("user"), prop.getProperty("password"));
 
-
         load_original_data();
         stockIn();
         placeOrder();
         updateOrder();
         deleteOrder();
-        
+
+
+        Scanner sc = new Scanner(System.in);
+        String number_for_Q12 = sc.next();
+
+//        getFavoriteProductModel();
+//        getAvgStockByCenter();
+        getProductByNumber(number_for_Q12);
+
         closeDB();
     }
-
 
 
     // 目前采取的办法是把date作为主键的参考
@@ -430,56 +439,56 @@ public class LoadOriginalData {
     private static void updateOrder() throws IOException, SQLException {
         PreparedStatement statement1 = null;
         PreparedStatement statement2 = null;
-        PreparedStatement statement3= null;
-        PreparedStatement statement4=null;
-        PreparedStatement statement5=null;
-        PreparedStatement statement6=null;
-        BufferedReader br=new BufferedReader(new FileReader("C:\\proj_temp\\proj2\\src\\release-testcase1\\task34_update_test_data_publish.tsv"));
+        PreparedStatement statement3 = null;
+        PreparedStatement statement4 = null;
+        PreparedStatement statement5 = null;
+        PreparedStatement statement6 = null;
+        BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\task34_update_test_data_publish.tsv"));
         br.readLine();
         String line;
-        String contract,	product_model,	salesman,	estimate_delivery_date,	lodgement_date;
+        String contract, product_model, salesman, estimate_delivery_date, lodgement_date;
         int quantity;
-        while((line=br.readLine())!=null){
-            String[]parts=line.split("\t");
-            contract=parts[0];
-            product_model=parts[1];
-            salesman=parts[2];
-            quantity=Integer.parseInt(parts[3]);
-            estimate_delivery_date=parts[4];
-            lodgement_date=parts[5];
+        while ((line = br.readLine()) != null) {
+            String[] parts = line.split("\t");
+            contract = parts[0];
+            product_model = parts[1];
+            salesman = parts[2];
+            quantity = Integer.parseInt(parts[3]);
+            estimate_delivery_date = parts[4];
+            lodgement_date = parts[5];
             /*
             目标：通过update中的数据找到order表格中对应的数据
             直接在order中搜索contract和model
              */
-            statement1=con.prepareStatement("select id from order_table where contract_number=? and product_model=? and salesman_number=?");
-            statement1.setString(1,contract);
-            statement1.setString(2,product_model);
-            statement1.setString(3,salesman);
-            ResultSet IDset=statement1.executeQuery();
+            statement1 = con.prepareStatement("select id from order_table where contract_number=? and product_model=? and salesman_number=?");
+            statement1.setString(1, contract);
+            statement1.setString(2, product_model);
+            statement1.setString(3, salesman);
+            ResultSet IDset = statement1.executeQuery();
             IDset.next();
-            if(IDset.getRow()==0){
+            if (IDset.getRow() == 0) {
                 continue;
             }
-            int id=IDset.getInt("id");
+            int id = IDset.getInt("id");
             //第一个检查点：销售员只能更新自己的订单
-            statement3=con.prepareStatement("select * from order_table where id=?");
-            statement3.setInt(1,id);
-            ResultSet orderSet=statement3.executeQuery();
+            statement3 = con.prepareStatement("select * from order_table where id=?");
+            statement3.setInt(1, id);
+            ResultSet orderSet = statement3.executeQuery();
             orderSet.next();
-            if(orderSet.getRow()==0){
+            if (orderSet.getRow() == 0) {
                 continue;
             }
-            String nowSalesman=orderSet.getString("salesman_number");
-            if(!salesman.equals(nowSalesman)){
+            String nowSalesman = orderSet.getString("salesman_number");
+            if (!salesman.equals(nowSalesman)) {
                 continue;
             }
             //未提到的检查点：爆仓
-            statement4=con.prepareStatement("select center from enterprise where enterprise=(select enterprise from contract where contract_number=?)");
-            statement4.setString(1,contract);
-            ResultSet centerSet=statement4.executeQuery();
+            statement4 = con.prepareStatement("select center from enterprise where enterprise=(select enterprise from contract where contract_number=?)");
+            statement4.setString(1, contract);
+            ResultSet centerSet = statement4.executeQuery();
             centerSet.next();
-            if(centerSet.getRow()==0) continue;
-            String nowCenter=centerSet.getString("center");
+            if (centerSet.getRow() == 0) continue;
+            String nowCenter = centerSet.getString("center");
             statement5 = con.prepareStatement("select quantity from store where center = ? and product_model = ?");
             statement5.setString(1, nowCenter);
             statement5.setString(2, product_model);
@@ -487,79 +496,78 @@ public class LoadOriginalData {
             check1_b.next();
             if (check1_b.getRow() == 0) continue;
             int store_quantity = check1_b.getInt("quantity");
-            if (store_quantity+orderSet.getInt("quantity") < quantity) continue;
+            if (store_quantity + orderSet.getInt("quantity") < quantity) continue;
             //第二个检查点：更新订单数量的同时，库存数量也要随之改变,(ps：记得把原来的order中的quantity先要加回去)
-            update_data_for_store(-quantity+orderSet.getInt("quantity"),nowCenter,product_model,lodgement_date);
+            update_data_for_store(-quantity + orderSet.getInt("quantity"), nowCenter, product_model, lodgement_date);
             //第三个检查点，如果一个订单更新后数量是0，那么这个订单要在合同中移除
-            if(quantity==0){
+            if (quantity == 0) {
                 deleteOrderByID(id);
             }
             //第四个检查点貌似并不用写了
             //大部分更新
-            statement2=con.prepareStatement("update order_table set quantity=?,estimated_date=?,lodgement_date=? where id=?");//只有数量，edd，ld可能会被更新
-            statement2.setInt(1,quantity);
-            statement2.setString(2,estimate_delivery_date);
-            statement2.setString(3,lodgement_date);
-            statement2.setInt(4,id);
+            statement2 = con.prepareStatement("update order_table set quantity=?,estimated_date=?,lodgement_date=? where id=?");//只有数量，edd，ld可能会被更新
+            statement2.setInt(1, quantity);
+            statement2.setString(2, estimate_delivery_date);
+            statement2.setString(3, lodgement_date);
+            statement2.setInt(4, id);
             statement2.executeUpdate();
         }
         con.commit();
     }
 
-
     //这是根据order的ID来进行删除
     private static void deleteOrderByID(int id) throws SQLException {
-        PreparedStatement statement=con.prepareStatement("delete from order_table where id=?");
-        statement.setInt(1,id);
+        PreparedStatement statement = con.prepareStatement("delete from order_table where id=?");
+        statement.setInt(1, id);
         statement.execute();
     }
 
-    private static void deleteOrder() throws IOException , SQLException{
-        PreparedStatement statement1=null;
-        PreparedStatement statement2=null;
-        PreparedStatement statement3=null;
-        PreparedStatement statement4=null;
-        PreparedStatement statement5=null;
-        BufferedReader br=new BufferedReader(new FileReader("C:\\proj_temp\\proj2\\src\\release-testcase1\\task34_delete_test_data_publish.tsv"));
+    private static void deleteOrder() throws IOException, SQLException {
+        PreparedStatement statement1 = null;
+        PreparedStatement statement2 = null;
+        PreparedStatement statement3 = null;
+        PreparedStatement statement4 = null;
+        PreparedStatement statement5 = null;
+        BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\task34_delete_test_data_publish.tsv"));
         br.readLine();
         String line;
-        String contract,salesman;
+        String contract, salesman;
         int seq;
-        while((line=br.readLine())!=null){
-            String[]parts=line.split("\t");
-            contract=parts[0];
-            salesman=parts[1];
-            seq=Integer.parseInt(parts[2]);
-            statement1=con.prepareStatement("select id from(select *, rank() over(partition by contract_number,salesman_number order by estimated_date desc ,product_model)r\n" +
+        while ((line = br.readLine()) != null) {
+            String[] parts = line.split("\t");
+            contract = parts[0];
+            salesman = parts[1];
+            seq = Integer.parseInt(parts[2]);
+            statement1 = con.prepareStatement("select id from(select *, rank() over(partition by contract_number,salesman_number order by estimated_date desc ,product_model)r\n" +
                     "from order_table)rank where contract_number=? and salesman_number=? and r=?");
-            statement1.setString(1,contract);
-            statement1.setString(2,salesman);
-            statement1.setInt(3,seq);
-            ResultSet idSet=statement1.executeQuery();
+            statement1.setString(1, contract);
+            statement1.setString(2, salesman);
+            statement1.setInt(3, seq);
+            ResultSet idSet = statement1.executeQuery();
             idSet.next();
-            if(idSet.getRow()==0){
+            if (idSet.getRow() == 0) {
                 continue;
             }
-            int id=idSet.getInt("id");
+            int id = idSet.getInt("id");
             //第一个检查点自动满足了，因为前面查询的时候就对salesman有要求
-            statement3=con.prepareStatement("select * from order_table where id=?");
-            statement3.setInt(1,id);
-            ResultSet orderSet=statement3.executeQuery();
+            statement3 = con.prepareStatement("select * from order_table where id=?");
+            statement3.setInt(1, id);
+            ResultSet orderSet = statement3.executeQuery();
             orderSet.next();
-            if(orderSet.getRow()==0){
+            if (orderSet.getRow() == 0) {
                 continue;
             }
 
-            statement4=con.prepareStatement("select center from enterprise where enterprise=(select enterprise from contract where contract_number=?)");
-            statement4.setString(1,orderSet.getString("contract_number"));
-            ResultSet centerSet=statement4.executeQuery();
+            statement4 = con.prepareStatement("select center from enterprise where enterprise=(select enterprise from contract where contract_number=?)");
+            statement4.setString(1, orderSet.getString("contract_number"));
+            ResultSet centerSet = statement4.executeQuery();
             centerSet.next();
-            if(centerSet.getRow()==0) continue;
-            String nowCenter=centerSet.getString("center");
+            if (centerSet.getRow() == 0) continue;
+            String nowCenter = centerSet.getString("center");
             //第二个检查点，删除订单后，库存数量要随之改变
-            update_data_for_store(orderSet.getInt("quantity"),nowCenter,orderSet.getString("product_model"),orderSet.getString("lodgement_date"));
-            statement2=con.prepareStatement("delete from order_table where id=?");
-            statement2.setInt(1,id);
+            update_data_for_store(orderSet.getInt("quantity"), nowCenter, orderSet.getString("product_model"), orderSet.getString("lodgement_date"));
+            statement2 = con.prepareStatement("delete from order_table where id=?");
+            statement2.setInt(1, id);
             statement2.execute();
             //第三个检查点自动满足
         }
@@ -618,7 +626,7 @@ public class LoadOriginalData {
                     loadData_for_supply_center(center);
                 } else {
                     center = parts1[1] + "," + parts1[2];
-                    center = center.replaceAll("\"","");
+                    center = center.replaceAll("\"", "");
                     loadData_for_supply_center(center);
                 }
             }
@@ -642,7 +650,7 @@ public class LoadOriginalData {
                         type = parts2[7];
                     } else {
                         center = parts2[5] + "," + parts2[6];
-                        center= center.replaceAll("\"","");
+                        center = center.replaceAll("\"", "");
                         mobile_number = parts2[7];
                         type = parts2[8];
                     }
@@ -709,7 +717,7 @@ public class LoadOriginalData {
                         industry = parts4[5];
                     } else {
                         center = parts4[4] + "," + parts4[5];
-                        center = center.replaceAll("\"","");
+                        center = center.replaceAll("\"", "");
                         industry = parts4[6];
                     }
                     loadData_for_client_enterprise(enterprise, country, city, center, industry);
@@ -901,6 +909,81 @@ public class LoadOriginalData {
             stmt9.setString(6, product_model);
             stmt9.executeUpdate();
         }
+    }
+
+
+    private static void getFavoriteProductModel() throws SQLException {
+        PreparedStatement statement = null;
+        statement = con.prepareStatement("select product_model, max as quantity\n" +
+                "from (\n" +
+                "         select*, max(quantity) over () as max\n" +
+                "         from order_table) sub_table\n" +
+                "where quantity = max;");
+        ResultSet result = statement.executeQuery();
+        result.next();
+        while (result.getRow() != 0) {
+            System.out.println("Q10");
+            String product_model = result.getString("product_model");
+            int quantity = result.getInt("quantity");
+            System.out.printf("%-40s%-10d\n", product_model, quantity);
+            result.next();
+        }
+        if (statement != null)
+            statement.close();
+    }
+
+    private static void getAvgStockByCenter() throws SQLException {
+        PreparedStatement statement = null;
+        statement = con.prepareStatement("select distinct center, round(1.0 * avg(quantity) over (partition by center), 1) as quantity\n" +
+                "from store\n" +
+                "order by center;");
+        ResultSet resultSet = statement.executeQuery();
+        resultSet.next();
+        System.out.println("Q11");
+        while (resultSet.getRow() != 0) {
+            String center = resultSet.getString("center");
+            double quantity = resultSet.getDouble("quantity");
+            System.out.printf("%-50s %-10.1f\n", center, quantity);
+            resultSet.next();
+        }
+
+
+        if (statement != null)
+            statement.close();
+    }
+
+    private static void getProductByNumber(String number) throws SQLException {
+        PreparedStatement statement = null;
+        statement = con.prepareStatement("select center, m.product_model, purchase_price, quantity\n" +
+                "from (\n" +
+                "         select product_model\n" +
+                "         from product\n" +
+                "                  join model m on product.product_code = m.product_code\n" +
+                "         where m.product_code = ?) sub_table\n" +
+                "         join model m on m.product_model = sub_table.product_model\n" +
+                "         join store s on m.product_model = s.product_model\n" +
+                ";");
+        statement.setString(1, number);
+        ResultSet resultSet = statement.executeQuery();
+        resultSet.next();
+        String center, product_model;
+        int purchase_price, quantity;
+        String a = "center";
+        String b = "product_model";
+        String c = "purchase_price";
+        String d = "quantity";
+        System.out.printf("%-20s %-25s %-20s %-20s\n", a, b, c, d);
+        while (resultSet.getRow() != 0) {
+            center = resultSet.getString("center");
+            product_model = resultSet.getString("product_model");
+            purchase_price = resultSet.getInt("purchase_price");
+            quantity = resultSet.getInt("quantity");
+            resultSet.next();
+            System.out.printf("%-20s %-25s %-20d %-20d\n", center, product_model, purchase_price, quantity);
+        }
+
+        if (statement != null)
+            statement.close();
     }
 
 
