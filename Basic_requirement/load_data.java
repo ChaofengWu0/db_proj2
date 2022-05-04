@@ -353,6 +353,7 @@ public class LoadOriginalData {
             parts = line.split(",");
             if (parts.length == 8) {
                 center = parts[1] + "," + parts[2];
+                center = center.replaceAll("\"", "");
                 product_model = parts[3];
                 staff = parts[4];
                 date = parts[5];
@@ -379,7 +380,7 @@ public class LoadOriginalData {
             statement.setString(1, staff);
             ResultSet check1_b = statement.executeQuery();
             check1_b.next();
-            if (check1_b.getRow()==0) continue;
+            if (check1_b.getRow() == 0) continue;
 
             String check_center = check1_b.getString("center");
             // 供应中心与人员所在供应中心对不上
@@ -476,6 +477,7 @@ public class LoadOriginalData {
                     loadData_for_supply_center(center);
                 } else {
                     center = parts1[1] + "," + parts1[2];
+                    center = center.replaceAll("\"","");
                     loadData_for_supply_center(center);
                 }
             }
@@ -499,6 +501,7 @@ public class LoadOriginalData {
                         type = parts2[7];
                     } else {
                         center = parts2[5] + "," + parts2[6];
+                        center= center.replaceAll("\"","");
                         mobile_number = parts2[7];
                         type = parts2[8];
                     }
@@ -565,6 +568,7 @@ public class LoadOriginalData {
                         industry = parts4[5];
                     } else {
                         center = parts4[4] + "," + parts4[5];
+                        center = center.replaceAll("\"","");
                         industry = parts4[6];
                     }
                     loadData_for_client_enterprise(enterprise, country, city, center, industry);
@@ -757,8 +761,4 @@ public class LoadOriginalData {
             stmt9.executeUpdate();
         }
     }
-
-
 }
-
-
