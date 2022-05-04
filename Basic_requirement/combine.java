@@ -3,6 +3,12 @@
 // Q3 增删改查依据什么实现
 // Q4  Q11是什么意思
 
+/**
+ * Attention:
+ * Q12 quantity是store之后的数据，即在下订单之前就得到的数量
+ * Q10 quantity指订单量，以及 这个数据是在修改订单之后得到的
+ */
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -254,20 +260,23 @@ public class LoadOriginalData {
         openDB(prop.getProperty("host"), prop.getProperty("database"),
                 prop.getProperty("user"), prop.getProperty("password"));
 
+        Scanner sc = new Scanner(System.in);
+        String number_for_Q12 = sc.next();
+
         load_original_data();
         stockIn();
+
         placeOrder();
         updateOrder();
         deleteOrder();
 
 
-        Scanner sc = new Scanner(System.in);
-        String number_for_Q12 = sc.next();
 
-//        getFavoriteProductModel();
+//
+        getFavoriteProductModel();
 //        getAvgStockByCenter();
-        getProductByNumber(number_for_Q12);
-
+//        getProductByNumber(number_for_Q12);
+//
         closeDB();
     }
 
@@ -914,15 +923,20 @@ public class LoadOriginalData {
 
     private static void getFavoriteProductModel() throws SQLException {
         PreparedStatement statement = null;
-        statement = con.prepareStatement("select product_model, max as quantity\n" +
+        statement = con.prepareStatement("with q as (\n" +
+                "    select count(*) cnt, product_model\n" +
+                "    from order_table\n" +
+                "    group by product_model)\n" +
+                "select max as quantity, product_model\n" +
                 "from (\n" +
-                "         select*, max(quantity) over () as max\n" +
-                "         from order_table) sub_table\n" +
-                "where quantity = max;");
+                "         select max(cnt) over () as max, *\n" +
+                "         from q) sub_table\n" +
+                "where cnt = max\n" +
+                ";");
         ResultSet result = statement.executeQuery();
+        System.out.println("Q10");
         result.next();
         while (result.getRow() != 0) {
-            System.out.println("Q10");
             String product_model = result.getString("product_model");
             int quantity = result.getInt("quantity");
             System.out.printf("%-40s%-10d\n", product_model, quantity);
@@ -972,6 +986,7 @@ public class LoadOriginalData {
         String b = "product_model";
         String c = "purchase_price";
         String d = "quantity";
+        System.out.println("Q12");
         System.out.printf("%-20s %-25s %-20s %-20s\n", a, b, c, d);
         while (resultSet.getRow() != 0) {
             center = resultSet.getString("center");
