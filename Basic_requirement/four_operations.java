@@ -61,7 +61,7 @@ public class FourOperations_version2 {
         ResultSetMetaData rsmd = rs.getMetaData();
         String[] titles = new String[rsmd.getColumnCount()];
         System.out.println("Now please input the values you want to insert\n" +
-                "If you don't want to insert the value,please input null,else input the values");
+                "If you don't want to insert the value,please input null,else input the values\n");
         boolean[] has_value = new boolean[rsmd.getColumnCount()];
         String[] inserts = new String[rsmd.getColumnCount()];
         for (int i = 0; i < titles.length; i++) {
@@ -184,6 +184,7 @@ public class FourOperations_version2 {
                 sql.append(",");
             }
         }
+
         sql.append(" from ");
         sql.append(table_name);
         if (constrains[0] != null)
@@ -213,14 +214,28 @@ public class FourOperations_version2 {
         assert fileOutputStream != null;
         fileOutputStream.write("\n".getBytes());
         fileOutputStream.flush();
+        // 表头写好了
+
         rs.next();
         while (rs.getRow() != 0) {
             ArrayList<String> write_in = new ArrayList<>();
             for (String tempTitle : tempTitles) {
+                /**
+                 * 这里没写好，返回的值为null时，我也会往write_in里面添加数据，会出错
+                 */
                 if (check(tempTitle)) {
-                    write_in.add(String.valueOf(rs.getInt(tempTitle)));
-                } else write_in.add(rs.getString(tempTitle));
+                    if (String.valueOf(rs.getInt(tempTitle)) != null) {
+                        write_in.add(String.valueOf(rs.getInt(tempTitle)));
+                    }else {
+                        write_in.add("null");
+                    }
+                } else {
+                    if (rs.getString(tempTitle) != null) {
+                        write_in.add(rs.getString(tempTitle));
+                    } else write_in.add("null");
+                }
             }
+
             for (int i = 0; i < write_in.size(); i++) {
                 fileOutputStream.write(write_in.get(i).getBytes());
                 if (i != write_in.size() - 1) {
@@ -260,7 +275,7 @@ public class FourOperations_version2 {
                 "If the input is null,it means that this attribute doesn't have a constraint\n" +
                 "If the the type of column is 'age' 'unit_price' 'purchase_price' 'quantity',please input two numbers a,b meaning [a,b]\n" +
                 "Otherwise, please input a string to satisfy your attempt.\n" +
-                "And please input stop to finish the input\n");
+                "And please input 'stop' to finish the input\n");
         // 我要做什么？ 我要给where后面添加语句。
         // 怎么添加？ 当有限制的时候就要添加。
         // 怎么判断有没有限制？ 用has_value来确定此处有没有限制,如果has_value对应的索引值是true，那么说明此值有限制,否则无限制，如果一个限制都没有，那么直接返回即可
