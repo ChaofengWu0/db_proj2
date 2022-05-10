@@ -1,14 +1,17 @@
+import java.awt.image.AreaAveragingScaleFilter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-// age unit_price
 
 public class FourOperations_version2 {
 
     private static Connection con = null;
 
-    public static void choose(Connection con___) throws SQLException {
+    public static void choose(Connection con___) throws SQLException, IOException {
         con = con___;
         Scanner sc = new Scanner(System.in);
         System.out.println("Please choose the operations");
@@ -148,19 +151,90 @@ public class FourOperations_version2 {
 
     }
 
-    private static void select() throws SQLException {
+    private static void select() throws SQLException, IOException {
+        String txtFilePath = "C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\select_ans.txt";
+
         Scanner sc = new Scanner(System.in);
         System.out.println("Please input the table name you want to select");
         String table_name = sc.next();
         Statement statement = con.createStatement();
         ArrayList<String> tempTitles = new ArrayList<>();
         getTitles(table_name, tempTitles);
+        System.out.println("Now,please choose the column you want\n" +
+                "If you want to select the column, input the name of the column\n" +
+                "Or you want to select all columns,please input * \n" +
+                "And if you finished the selection please input 'stop'\n" +
+                "And here is the column name of the table\n");
+        for (String tempTitle : tempTitles) {
+            System.out.print(tempTitle + "   ");
+        }
+        System.out.println();
+        ArrayList<String> columns = new ArrayList<>();
+        String temp;
+        while (!(temp = sc.next()).equals("stop")) {
+            columns.add(temp);
+        }
+        String[] constrains = new String[1];
+        getConstraints(tempTitles, constrains);
+        // 在这里的时候我就获得了where之后的内容
+        StringBuilder sql = new StringBuilder("select ");
+        for (int i = 0; i < columns.size(); i++) {
+            sql.append(columns.get(i));
+            if (i != columns.size() - 1) {
+                sql.append(",");
+            }
+        }
+        sql.append(" from ");
+        sql.append(table_name);
+        if (constrains[0] != null)
+            sql.append(constrains[0]);
+
+        ResultSet rs = statement.executeQuery(sql.toString());
+        ResultSetMetaData rsmd = rs.getMetaData();
+        int title_cnt = rsmd.getColumnCount();
+
+        FileOutputStream fileOutputStream = null;
+        File file = new File(txtFilePath);
+        if (!file.exists()) {
+            file.createNewFile();
+        } else {
+            fileOutputStream = new FileOutputStream(file);
+        }
 
 
+        for (int i = 0; i < title_cnt; i++) {
+            assert fileOutputStream != null;
+            fileOutputStream.write(rsmd.getColumnName(i + 1).getBytes());
+            if (i != title_cnt - 1) {
+                fileOutputStream.write(",".getBytes());
+            }
+            fileOutputStream.flush();
+        }
+        assert fileOutputStream != null;
+        fileOutputStream.write("\n".getBytes());
+        fileOutputStream.flush();
+        rs.next();
+        while (rs.getRow() != 0) {
+            ArrayList<String> write_in = new ArrayList<>();
+            for (String tempTitle : tempTitles) {
+                if (check(tempTitle)) {
+                    write_in.add(String.valueOf(rs.getInt(tempTitle)));
+                } else write_in.add(rs.getString(tempTitle));
+            }
+            for (int i = 0; i < write_in.size(); i++) {
+                fileOutputStream.write(write_in.get(i).getBytes());
+                if (i != write_in.size() - 1) {
+                    fileOutputStream.write(",".getBytes());
+                }
+                fileOutputStream.flush();
+            }
+            fileOutputStream.write("\n".getBytes());
+            rs.next();
+        }
+        fileOutputStream.close();
         con.commit();
         if (statement != null) statement.close();
     }
-
 
     private static void updateForCenter(String center, String name, Connection con) throws SQLException {
         String check_ = "select director from center where center = ?";
@@ -186,12 +260,11 @@ public class FourOperations_version2 {
                 "If the input is null,it means that this attribute doesn't have a constraint\n" +
                 "If the the type of column is 'age' 'unit_price' 'purchase_price' 'quantity',please input two numbers a,b meaning [a,b]\n" +
                 "Otherwise, please input a string to satisfy your attempt.\n" +
-                "And please input stop to finish the input");
+                "And please input stop to finish the input\n");
         // 我要做什么？ 我要给where后面添加语句。
         // 怎么添加？ 当有限制的时候就要添加。
         // 怎么判断有没有限制？ 用has_value来确定此处有没有限制,如果has_value对应的索引值是true，那么说明此值有限制,否则无限制，如果一个限制都没有，那么直接返回即可
         // 具体的值应该怎么添加？ 如果是varchar类型，直接where column = value即可，如果是integer类型, between and
-//        ArrayList<Boolean> has_value = new ArrayList<>();
         ArrayList<String> values = new ArrayList<>();
         for (String tempTitle : tempTitles) {
             System.out.print(tempTitle + "     ");
@@ -219,7 +292,7 @@ public class FourOperations_version2 {
         int value_cnt = 0;
         for (int i = 0; i < cnt; i++) {
             if (i == 0) {
-                constrains[0] = "where ";
+                constrains[0] = " where ";
             }
             // 说明是integer类型的
             constrains[0] += arrayList.get(i);
