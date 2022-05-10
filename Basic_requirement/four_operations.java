@@ -48,8 +48,6 @@ public class FourOperations_version2 {
 
     private static void insert() throws SQLException {
         String center = null, name = null, type = null;
-
-
         Scanner sc = new Scanner(System.in);
         Statement statement;
         statement = con.createStatement();
@@ -147,8 +145,59 @@ public class FourOperations_version2 {
         if (statement != null) statement.close();
     }
 
-    private static void update() {
+    private static void update() throws SQLException {
+        Scanner sc = new Scanner(System.in);
+        StringBuilder sql = new StringBuilder("update ");
+        System.out.println("Please input the table name you want to delete");
+        String table_name = sc.next();
+        sql.append(table_name);
+        sql.append(" set ");
+        Statement statement = con.createStatement();
+        ArrayList<String> tempTitles = new ArrayList<>();
+        getTitles(table_name, tempTitles);
+        String[] constrains = new String[1];
+        getConstraints(tempTitles, constrains);
+        System.out.println("Please choose the columns you want to update\n" +
+                "If you want to update the value of the column,input the value\n" +
+                "If you do not want to update the value, input 'null'\n" +
+                "And please input 'stop' to finish the input\n");
 
+        for (String tempTitle : tempTitles) {
+            System.out.print(tempTitle + "     ");
+        }
+        System.out.println();
+        ArrayList<String> update_titles = new ArrayList<>();
+        ArrayList<String> update_values = new ArrayList<>();
+        String temp;
+        int cnt = 0;
+        while (!(temp = sc.next()).equals("stop")) {
+            if (!temp.equals("null")) {
+                update_titles.add(tempTitles.get(cnt));
+                update_values.add(temp);
+            }
+            cnt++;
+        }
+        // update设置
+        for (int i = 0; i < update_titles.size(); i++) {
+            sql.append(update_titles.get(i));
+            sql.append(" = ");
+            if (check(update_titles.get(i))) {
+                sql.append(update_values.get(i));
+            } else {
+                sql.append("'");
+                sql.append(update_values.get(i));
+                sql.append("'");
+            }
+            if (i != update_titles.size() - 1) {
+                sql.append(",");
+            }
+        }
+        sql.append(constrains[0]);
+        statement.executeUpdate(sql.toString());
+        con.commit();
+        if (statement != null) {
+            statement.close();
+        }
     }
 
     private static void select() throws SQLException, IOException {
@@ -226,7 +275,7 @@ public class FourOperations_version2 {
                 if (check(tempTitle)) {
                     if (String.valueOf(rs.getInt(tempTitle)) != null) {
                         write_in.add(String.valueOf(rs.getInt(tempTitle)));
-                    }else {
+                    } else {
                         write_in.add("null");
                     }
                 } else {
