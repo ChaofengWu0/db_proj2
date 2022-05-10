@@ -127,12 +127,13 @@ public class FourOperations_version2 {
     private static void delete() throws SQLException {
         Scanner sc = new Scanner(System.in);
         System.out.println("Please input the table name you want to delete");
-        String tale_name = sc.next();
+        String table_name = sc.next();
         Statement statement = con.createStatement();
         ArrayList<String> tempTitles = new ArrayList<>();
-        getTitles(tale_name, tempTitles);
+        getTitles(table_name, tempTitles);
+
         StringBuilder sql = new StringBuilder("delete from ");
-        sql.append(tale_name);
+        sql.append(table_name);
         String[] constrains = new String[1];
         constrains[0] = null;
         getConstraints(tempTitles, constrains);
@@ -147,8 +148,17 @@ public class FourOperations_version2 {
 
     }
 
-    private static void select() {
+    private static void select() throws SQLException {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Please input the table name you want to select");
+        String table_name = sc.next();
+        Statement statement = con.createStatement();
+        ArrayList<String> tempTitles = new ArrayList<>();
+        getTitles(table_name, tempTitles);
 
+
+        con.commit();
+        if (statement != null) statement.close();
     }
 
 
@@ -196,7 +206,13 @@ public class FourOperations_version2 {
                 continue;
             }
             arrayList.add(tempTitles.get(cnt_for_title));
-            values.add(temp);
+            if (!check(tempTitles.get(cnt_for_title))) {
+                values.add(temp);
+            } else {
+                values.add(temp);
+                temp = sc.next();
+                values.add(temp);
+            }
             cnt_for_title++;
             cnt++;
         }
@@ -206,8 +222,8 @@ public class FourOperations_version2 {
                 constrains[0] = "where ";
             }
             // 说明是integer类型的
-            constrains[0] += tempTitles.get(i);
-            if (check(tempTitles.get(i))) {
+            constrains[0] += arrayList.get(i);
+            if (check(arrayList.get(i))) {
                 constrains[0] += " between ";
                 constrains[0] += values.get(value_cnt++);
                 constrains[0] += " and ";
@@ -219,7 +235,7 @@ public class FourOperations_version2 {
                 constrains[0] += "' ";
             }
             if (i != cnt - 1) {
-                constrains[0] += " and";
+                constrains[0] += " and ";
             } else {
                 constrains[0] += ";";
             }
