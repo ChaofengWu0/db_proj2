@@ -220,7 +220,8 @@ public class FourOperations_version2 {
         ArrayList<String> columns = new ArrayList<>();
         String temp;
         while (!(temp = sc.next()).equals("stop")) {
-            columns.add(temp);
+            if (!temp.equals("null"))
+                columns.add(temp);
         }
         String[] constrains = new String[1];
         getConstraints(tempTitles, constrains);
@@ -240,8 +241,12 @@ public class FourOperations_version2 {
 
         ResultSet rs = statement.executeQuery(sql.toString());
         ResultSetMetaData rsmd = rs.getMetaData();
-        int title_cnt = rsmd.getColumnCount();
 
+        // true_titles里面存放的是实际需要的列
+        ArrayList<String> true_titles = new ArrayList<>();
+
+
+        int title_cnt = rsmd.getColumnCount();
         FileOutputStream fileOutputStream = null;
         File file = new File(txtFilePath);
         if (!file.exists()) {
@@ -250,12 +255,13 @@ public class FourOperations_version2 {
             fileOutputStream = new FileOutputStream(file);
         }
 
-
         for (int i = 0; i < title_cnt; i++) {
             assert fileOutputStream != null;
-            if (columns.get(i).equals("null")) continue;
-            fileOutputStream.write(columns.get(i).getBytes());
-            if (i != title_cnt - 1) {
+
+            fileOutputStream.write(rsmd.getColumnName(i + 1).getBytes());
+            true_titles.add(rsmd.getColumnName(i + 1));
+            if (i !=
+                    title_cnt - 1) {
                 fileOutputStream.write(",".getBytes());
             }
             fileOutputStream.flush();
@@ -268,8 +274,7 @@ public class FourOperations_version2 {
         rs.next();
         while (rs.getRow() != 0) {
             ArrayList<String> write_in = new ArrayList<>();
-            for (String tempTitle : columns) {
-                if (tempTitle.equals("null")) continue;
+            for (String tempTitle : true_titles) {
                 /**
                  * 这里没写好，返回的值为null时，我也会往write_in里面添加数据，会出错
                  */
