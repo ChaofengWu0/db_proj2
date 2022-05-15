@@ -328,7 +328,7 @@ public class FourOperations_version2 {
         ArrayList<String> arrayList = new ArrayList<>();
         System.out.println("Please choose the constrains\n" +
                 "If the input is null,it means that this attribute doesn't have a constraint\n" +
-                "If the the type of column is 'age' 'unit_price' 'purchase_price' 'quantity',please input two numbers a,b meaning [a,b]\n" +
+                "If the the type of column is 'age' 'unit_price' 'purchase_price' 'quantity' 'id',please input two numbers a,b meaning [a,b]\n" +
                 "Otherwise, please input a string to satisfy your attempt.\n" +
                 "And please input 'stop' to finish the input\n");
         // 我要做什么？ 我要给where后面添加语句。
@@ -397,7 +397,7 @@ public class FourOperations_version2 {
     }
 
     private static boolean check(String s) {
-        return (s.equals("age") || s.equals("purchase_price") || s.equals("quantity") || s.equals("unit_price"));
+        return (s.equals("age") || s.equals("purchase_price") || s.equals("quantity") || s.equals("unit_price") || s.equals("id"));
     }
 
 }
