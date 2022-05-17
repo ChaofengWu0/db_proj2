@@ -24,9 +24,8 @@ public class DatabaseUtil {
             int curActiveCnt = snapshotIF.getActiveConnectionCount();
             int availableCnt = snapshotIF.getAvailableConnectionCount();
             int maxCnt = snapshotIF.getMaximumConnectionCount();
-//            return String.format("--- Active:%d\tAvailable:%d  \tMax:%d ---",
-//                    curActiveCnt, availableCnt, maxCnt);
-            return "";
+            return String.format("--- Active:%d\tAvailable:%d  \tMax:%d ---",
+                    curActiveCnt, availableCnt, maxCnt);
         } catch (ProxoolException e) {
             e.printStackTrace();
         }
@@ -37,13 +36,14 @@ public class DatabaseUtil {
         return instance;
     }
 
-    public Connection getConnection() {
+    public Connection getConnection() throws SQLException {
         Connection con = null;
         try {
             con = DriverManager.getConnection("proxool.postgres");
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        con.setAutoCommit(false);
         return con;
     }
 
