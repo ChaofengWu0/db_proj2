@@ -26,7 +26,7 @@ public class DatabaseUtil {
             int maxCnt = snapshotIF.getMaximumConnectionCount();
 //            return String.format("--- Active:%d\tAvailable:%d  \tMax:%d ---",
 //                    curActiveCnt, availableCnt, maxCnt);
-            return " ";
+            return "";
         } catch (ProxoolException e) {
             e.printStackTrace();
         }
