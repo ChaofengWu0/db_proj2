@@ -7,14 +7,15 @@ create table center
 
 create table staff
 (
-    staff         char(8) primary key,
     name          varchar,
     age           integer,
     gender        varchar,
+    staff         char(8),
     center        varchar
         references center (center) on delete cascade on update cascade,
     mobile_number varchar(11),
-    type          varchar
+    type          varchar,
+    primary key (staff)
 );
 
 create table product
@@ -26,11 +27,11 @@ create table product
 
 create table model
 (
+    product_code  varchar
+        references product (product_code) on delete cascade on update cascade,
     product_model varchar
         primary key,
-    unit_price    integer,
-    product_code  varchar
-        references product (product_code) on delete cascade on update cascade
+    unit_price    integer
 );
 
 create table enterprise
