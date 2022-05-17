@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+    <proxool>
+        <alias>postgres</alias>
+        <driver-url>jdbc:postgresql://127.0.0.1:5432/project2</driver-url>
+        <driver-class>org.postgresql.Driver</driver-class>
+        <driver-properties>
+            <property name="user" value="checker"/>
+            <property name="password" value="123456"/>
+        </driver-properties>
+        <minimum-connection-count>5</minimum-connection-count>
+        <maximum-connection-count>10</maximum-connection-count>
+    </proxool>
+</configuration>
