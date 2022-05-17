@@ -7,10 +7,10 @@ import org.logicalcobwebs.proxool.configuration.JAXPConfigurator;
 
 import java.sql.*;
 
-public class DatabasePool {
-    private static DatabasePool instance = new DatabasePool();
+public class DatabaseUtil {
+    private static DatabaseUtil instance = new DatabaseUtil();
 
-    private DatabasePool() {
+    public DatabaseUtil() {
         try {
             JAXPConfigurator.configure("src/proxool.xml", false);
         } catch (ProxoolException e) {
@@ -24,15 +24,16 @@ public class DatabasePool {
             int curActiveCnt = snapshotIF.getActiveConnectionCount();
             int availableCnt = snapshotIF.getAvailableConnectionCount();
             int maxCnt = snapshotIF.getMaximumConnectionCount();
-            return String.format("--- Active:%d\tAvailable:%d  \tMax:%d ---",
-                    curActiveCnt, availableCnt, maxCnt);
+//            return String.format("--- Active:%d\tAvailable:%d  \tMax:%d ---",
+//                    curActiveCnt, availableCnt, maxCnt);
+            return " ";
         } catch (ProxoolException e) {
             e.printStackTrace();
         }
         return "visit error";
     }
 
-    public static DatabasePool getInstance() {
+    public static DatabaseUtil getInstance() {
         return instance;
     }
 
@@ -46,11 +47,8 @@ public class DatabasePool {
         return con;
     }
 
-    public void closeConnection(Connection con, PreparedStatement preparedStatement, ResultSet resultSet) {
+    public void closeConnection(Connection con, PreparedStatement preparedStatement) {
         try {
-            if (resultSet != null) {
-                resultSet.close();
-            }
             if (preparedStatement != null) {
                 preparedStatement.close();
             }
@@ -61,5 +59,4 @@ public class DatabasePool {
             e.printStackTrace();
         }
     }
-
 }
