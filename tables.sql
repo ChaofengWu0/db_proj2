@@ -1,3 +1,5 @@
+drop table center,staff,model,product,enterprise,contract,store,order_table;
+
 create table center
 (
     center   varchar
@@ -75,3 +77,83 @@ create table order_table
     lodgement_date  varchar(10),
     salesman_number char(8) references staff (staff) on delete cascade on update cascade
 );
+
+
+
+-- create table test
+-- (
+--     test integer primary key
+-- );
+--
+-- insert into test (test)
+-- values (1);
+--
+-- create table test2
+-- (
+--     id   serial primary key,
+--     test integer references test (test) on delete cascade
+-- );
+--
+-- insert into test2(test)
+-- values (1);
+
+
+-- -- Q10
+-- select distinct ot.product_model, sum(quantity) over () as quantity
+-- from (
+--          select product_model
+--          from (
+--                   select*, max(quantity) over () as max
+--                   from order_table) sub_table1
+--          where quantity = max) sub_table2
+--          join order_table ot on ot.product_model = sub_table2.product_model
+-- where ot.product_model = sub_table2.product_model;
+--
+-- -- Q11
+-- select distinct center, round(1.0 * avg(quantity) over (partition by center), 1) as quantity
+-- from store
+-- order by center;
+--
+-- select *, count(*) over (partition by center)
+-- from store;
+--
+--
+-- -- Q12
+-- select center, m.product_model, purchase_price, quantity
+-- from (
+--          select product_model
+--          from product
+--                   join model m on product.product_code = m.product_code
+--          where m.product_code = 'A50L172') sub_table
+--          join model m on m.product_model = sub_table.product_model
+--          join store s on m.product_model = s.product_model
+-- ;
+--
+-- with q as (
+--     select count(*) cnt, product_model
+--     from order_table
+--     group by product_model)
+-- select max as quantity, product_model
+-- from (
+--          select max(cnt) over () as max, *
+--          from q) sub_table
+-- where cnt = max
+-- ;
+--
+--
+create table advanced_store
+(
+    name     varchar(100) primary key,
+    quantity integer not null
+);
+
+create table user_table
+(
+    id   integer primary key,
+    name varchar(100),
+    pwd  varchar(100),
+    type varchar(100)
+);
+
+
+
