@@ -1,6 +1,4 @@
-drop table center,staff,model,product,enterprise,contract,store,order_table;
-
-create table center
+create  table center
 (
     center   varchar
         primary key,
@@ -78,103 +76,6 @@ create table order_table
     salesman_number char(8) references staff (staff) on delete cascade on update cascade
 );
 
-
-
--- create table test
--- (
---     test integer primary key
--- );
-
--- insert into test (test)
--- values (1);
-
-
--- create table test2
--- (
---     id   serial primary key,
---     test integer references test (test) on delete cascade
--- );
-
--- insert into test2(test)
--- values (1);
-
-
--- Q10
--- select distinct ot.product_model, sum(quantity) over () as quantity
--- from (
---          select product_model
---          from (
---                   select*, max(quantity) over () as max
---                   from order_table) sub_table1
---          where quantity = max) sub_table2
---          join order_table ot on ot.product_model = sub_table2.product_model
--- where ot.product_model = sub_table2.product_model;
-
-
--- select *
--- from order_table
--- where product_model = 'ServerPower76';
-
-
--- select distinct product_model, sum as quantity
--- from (
---          select *, max(sum) over () as max
---          from (
---                   select *, sum(quantity) over (partition by product_model) as sum
---                   from order_table) sub_table) sub_table2
--- where sum = max;
-
-
--- Q11
--- select distinct center, round(1.0 * avg(quantity) over (partition by center), 1) as quantity
--- from store
--- order by center;
-
-
--- select *, count(*) over (partition by center)
--- from store;
-
-
--- select *
--- from store
--- where center = 'Asia';
-
--- select *
--- from order_table
--- where contract_number = 'CSE0000323'
--- ORDER BY estimated_date, product_model;
---
--- select *
--- from (select *, rank() over (partition by contract_number,salesman_number order by estimated_date desc ,product_model) r
---       from order_table) rank
--- where contract_number= 'CSE0000323'
--- --   and salesman_number=
---   and r= 2;
-
-
--- -- Q12
--- select center, m.product_model, purchase_price, quantity
--- from (
---          select product_model
---          from product
---                   join model m on product.product_code = m.product_code
---          where m.product_code = 'A50L172') sub_table
---          join model m on m.product_model = sub_table.product_model
---          join store s on m.product_model = s.product_model
--- ;
---
--- with q as (
---     select count(*) cnt, product_model
---     from order_table
---     group by product_model)
--- select max as quantity, product_model
--- from (
---          select max(cnt) over () as max, *
---          from q) sub_table
--- where cnt = max
--- ;
-
-
 create table advanced_store
 (
     name     varchar(100) primary key,
@@ -184,7 +85,7 @@ create table advanced_store
 
 
 -- 设计情景：
--- 用户权限
+-- 用户权限以及视图的结合使用
 -- 一个USER manager 可以增删查改staff,需要一个人来专门管理员工，他自然可以对员工表拥有所有的权限
 
 -- 一个USER supplier，只可以增store里面的数据，这是一个供应商，那么他只能向库存里面添加货物，不能对库存进行其他的操作
@@ -257,7 +158,3 @@ from store;
 create or replace view salesman_store as
 select product_model, center, purchase_price, quantity
 from store;
-
-revoke all on enterprise,store,order_table,staff,vip_store,visitor_store,salesman_store from supplier,manager,visitor,vip,salesman;
-
-DROP role manager,salesman,supplier,vip,visitor;
