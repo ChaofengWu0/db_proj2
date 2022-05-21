@@ -84,16 +84,17 @@ create table order_table
 -- (
 --     test integer primary key
 -- );
---
+
 -- insert into test (test)
 -- values (1);
---
+
+
 -- create table test2
 -- (
 --     id   serial primary key,
 --     test integer references test (test) on delete cascade
 -- );
---
+
 -- insert into test2(test)
 -- values (1);
 
@@ -108,12 +109,13 @@ create table order_table
 --          where quantity = max) sub_table2
 --          join order_table ot on ot.product_model = sub_table2.product_model
 -- where ot.product_model = sub_table2.product_model;
---
---
+
+
 -- select *
 -- from order_table
 -- where product_model = 'ServerPower76';
---
+
+
 -- select distinct product_model, sum as quantity
 -- from (
 --          select *, max(sum) over () as max
@@ -122,22 +124,21 @@ create table order_table
 --                   from order_table) sub_table) sub_table2
 -- where sum = max;
 
---
+
 -- Q11
 -- select distinct center, round(1.0 * avg(quantity) over (partition by center), 1) as quantity
 -- from store
 -- order by center;
---
---
---
+
+
 -- select *, count(*) over (partition by center)
 -- from store;
---
---
+
+
 -- select *
 -- from store
 -- where center = 'Asia';
---
+
 -- select *
 -- from order_table
 -- where contract_number = 'CSE0000323'
@@ -150,7 +151,7 @@ create table order_table
 -- --   and salesman_number=
 --   and r= 2;
 
---
+
 -- -- Q12
 -- select center, m.product_model, purchase_price, quantity
 -- from (
@@ -172,18 +173,30 @@ create table order_table
 --          from q) sub_table
 -- where cnt = max
 -- ;
---
---
+
+
 create table advanced_store
 (
     name     varchar(100) primary key,
     quantity integer not null
 );
+
+
+
 -- 设计情景：
+-- 用户权限
 -- 一个USER manager 可以增删查改staff,需要一个人来专门管理员工，他自然可以对员工表拥有所有的权限
+
 -- 一个USER supplier，只可以增store里面的数据，这是一个供应商，那么他只能向库存里面添加货物，不能对库存进行其他的操作
--- 一个USER visitor，只可以查enterprise表,这是一个访客用户，他只能对enterprise进行查操作来了解我们公司的合作伙伴
--- 一个USER salesman,可以增改order_table，这是销售人员的账户，他只能增加订单，修改订单，不能做其他的事情
+
+-- 一个USER visitor，只可以查enterprise表,这是一个访客用户，他只能对enterprise进行查操作来了解我们公司的合作伙伴，他也可以查看我们公司
+-- 的store的商品内容，查看价值在500以下的产品,都只能看商品名称,中心和销售价
+
+-- 一个USER vip 只可以查enterprise表,这是一个访客用户，他只能对enterprise进行查操作来了解我们公司的合作伙伴，他也可以查看我们公司
+-- 的store的商品内容，查看产品只能看商品名称，中心和销售价
+
+-- 一个USER salesman,可以增改order_table，这是销售人员的账户，他只能增加订单，修改订单，不能做其他的事情，还可以有一个对store的视图，可以看
+-- 商品名称，中心，销售价和剩余量
 create role manager with
     login
     nosuperuser
@@ -209,6 +222,17 @@ create role visitor with
     password '123456';
 COMMENT ON ROLE visitor is 'It has select permission on enterprise';
 grant select on enterprise to visitor;
+grant select on visitor_store to visitor;
+
+
+create role vip with
+    login
+    nosuperuser
+    noreplication
+    password '123456';
+COMMENT ON ROLE vip is 'It has select permission on enterprise';
+grant select on enterprise to vip;
+grant select on vip_store to vip;
 
 create role salesman with
     login
@@ -217,35 +241,23 @@ create role salesman with
     password '123456';
 COMMENT ON ROLE salesman is 'It has insert and update permissions on order_table';
 grant insert, update on order_table to salesman;
+grant select on salesman_store to salesman;
 
 
-
--- 设计情景：
--- 有一张验证表,只有验证成功才能注册成为管理者
-
--- 有一张用户表，用来记录用户的信息
--- 有一个CEO（type）,可以增删查改所有的表，可以修改验证表,但是修改之后，不会对之前验证过的用户权限造成影响
--- 有管理者 manager（type），唯一功能：删除普通用户,可以申请
--- 有一堆ordinary用户，只能select center表，product表，model表
--- 只有manager和ordinary可以申请注册，如果重复申请，不成立，报错。
---
--- create table identification
--- (
---     id serial primary key ,
---     identity_code char(4)
--- );
---
--- create
---     table user_table
--- (
---     id   serial primary key,
---     name varchar(100) unique ,
---     pwd  varchar(100),
---     type varchar(100)
--- );
+create or replace view visitor_store as
+select product_model, center, purchase_price
+from store
+where purchase_price <= 500;
 
 
+create or replace view vip_store as
+select product_model, center, purchase_price
+from store;
 
+create or replace view salesman_store as
+select product_model, center, purchase_price, quantity
+from store;
 
+revoke all on enterprise,store,order_table,staff,vip_store,visitor_store,salesman_store from supplier,manager,visitor,vip,salesman;
 
-
+DROP role manager,salesman,supplier,vip,visitor;
