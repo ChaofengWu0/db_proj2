@@ -98,7 +98,7 @@ create table order_table
 -- values (1);
 
 
--- -- Q10
+-- Q10
 -- select distinct ot.product_model, sum(quantity) over () as quantity
 -- from (
 --          select product_model
@@ -109,14 +109,47 @@ create table order_table
 --          join order_table ot on ot.product_model = sub_table2.product_model
 -- where ot.product_model = sub_table2.product_model;
 --
--- -- Q11
+--
+-- select *
+-- from order_table
+-- where product_model = 'ServerPower76';
+--
+-- select distinct product_model, sum as quantity
+-- from (
+--          select *, max(sum) over () as max
+--          from (
+--                   select *, sum(quantity) over (partition by product_model) as sum
+--                   from order_table) sub_table) sub_table2
+-- where sum = max;
+
+--
+-- Q11
 -- select distinct center, round(1.0 * avg(quantity) over (partition by center), 1) as quantity
 -- from store
 -- order by center;
 --
+--
+--
 -- select *, count(*) over (partition by center)
 -- from store;
 --
+--
+-- select *
+-- from store
+-- where center = 'Asia';
+--
+-- select *
+-- from order_table
+-- where contract_number = 'CSE0000323'
+-- ORDER BY estimated_date, product_model;
+--
+-- select *
+-- from (select *, rank() over (partition by contract_number,salesman_number order by estimated_date desc ,product_model) r
+--       from order_table) rank
+-- where contract_number= 'CSE0000323'
+-- --   and salesman_number=
+--   and r= 2;
+
 --
 -- -- Q12
 -- select center, m.product_model, purchase_price, quantity
