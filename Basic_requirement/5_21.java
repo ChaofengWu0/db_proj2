@@ -15,10 +15,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
 
 public class LoadOriginalData {
 
@@ -270,13 +267,6 @@ public class LoadOriginalData {
         openDB(prop.getProperty("host"), prop.getProperty("database"),
                 prop.getProperty("user"), prop.getProperty("password"));
 
-//        Scanner sc = new Scanner(System.in);
-//        String Q12_number = sc.next();
-//        ArrayList<String> Q13 = new ArrayList<>();
-//        for (int i = 0; i < 3; i++) {
-//            Q13.add(sc.next());
-//        }
-
 
 //
         load_original_data();
@@ -286,7 +276,23 @@ public class LoadOriginalData {
         updateOrder();
         deleteOrder();
 
-//        FourOperations_version2.choose(con);
+        String Q12_address = "C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\Q12";
+        String Q13_address = "C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\Q13";
+        BufferedReader br = Files.newBufferedReader(Paths.get(Q12_address));
+        String temp;
+        ArrayList<String> Q12 = new ArrayList<>();
+
+        while ((temp = br.readLine()) != null) {
+            String[] Q12_array = temp.split(",");
+            Collections.addAll(Q12, Q12_array);
+        }
+        br = Files.newBufferedReader(Paths.get(Q13_address));
+        ArrayList<String> Q13 = new ArrayList<>();
+        while ((temp = br.readLine()) != null) {
+            String[] Q13_array = temp.split(",");
+            Collections.addAll(Q13, Q13_array);
+        }
+
 
 
         getAllStaffCount();
@@ -295,10 +301,12 @@ public class LoadOriginalData {
         getNeverSoldProductCount();
         getFavoriteProductModel();
         getAvgStockByCenter();
-//        getProductByNumber(Q12_number);
-//        for (int i = 0; i < Q13.size(); i++) {
-//            getContractInfo(Q13.get(i));
-//        }
+        for (String s : Q12) {
+            getProductByNumber(s);
+        }
+        for (String s : Q13) {
+            getContractInfo(s);
+        }
         closeDB();
     }
 
@@ -395,7 +403,7 @@ public class LoadOriginalData {
     private static void placeOrder() throws IOException, SQLException {
         PreparedStatement statement1 = null;
         PreparedStatement statement2 = null;
-        String address_for_place_order = "C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\task2_test_data_final_public.csv";
+        String address_for_place_order = "C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\task2_test_data_final_public.tsv";
         BufferedReader br = Files.newBufferedReader(Paths.get(address_for_place_order));
         br.readLine();
 
@@ -411,7 +419,7 @@ public class LoadOriginalData {
         String line;
         String[] parts;
         while ((line = br.readLine()) != null) {
-            parts = line.split(",");
+            parts = line.split("\t");
             contract_num = parts[0];
             enterprise = parts[1];
             product_model = parts[2];
@@ -472,14 +480,14 @@ public class LoadOriginalData {
         PreparedStatement statement4 = null;
         PreparedStatement statement5 = null;
         PreparedStatement statement6 = null;
-        BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\update_final_test.csv"));
+        BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\update_final_test.tsv"));
         br.readLine();
         String line;
         String contract, product_model, salesman, estimate_delivery_date, lodgement_date;
         int quantity;
         while ((line = br.readLine()) != null) {
             // 修改了
-            String[] parts = line.split(",");
+            String[] parts = line.split("\t");
             contract = parts[0];
             product_model = parts[1];
             salesman = parts[2];
@@ -1064,14 +1072,14 @@ public class LoadOriginalData {
         String c = "purchase_price";
         String d = "quantity";
         System.out.println("Q12");
-        System.out.printf("%-20s %-25s %-20s %-20s\n", a, b, c, d);
+        System.out.printf("%-50s %-25s %-20s %-20s\n", a, b, c, d);
         while (resultSet.getRow() != 0) {
             center = resultSet.getString("center");
             product_model = resultSet.getString("product_model");
             purchase_price = resultSet.getInt("purchase_price");
             quantity = resultSet.getInt("quantity");
             resultSet.next();
-            System.out.printf("%-20s %-25s %-20d %-20d\n", center, product_model, purchase_price, quantity);
+            System.out.printf("%-50s %-25s %-20d %-20d\n", center, product_model, purchase_price, quantity);
         }
 
         if (statement != null)
@@ -1121,7 +1129,7 @@ public class LoadOriginalData {
         int temp_cnt = 0;
         while (resultSet2.getRow() != 0) {
             if (temp_cnt == 0) {
-                System.out.printf("%-30s %-25s %-15s %-5s %-5s %-10s\n", "product_model", "salesman", "quantity", "unit_price", "estimate_delivery_date", "lodgement_date");
+                System.out.printf("%-35s %-25s %-15s %-5s %-5s %-10s\n", "product_model", "salesman", "quantity", "unit_price", "estimate_delivery_date", "lodgement_date");
                 temp_cnt++;
             }
             product_model = resultSet2.getString("product_model");
@@ -1130,7 +1138,7 @@ public class LoadOriginalData {
             unit_price = resultSet2.getInt("unit_price");
             estimate_delivery_date = resultSet2.getString("estimated_date");
             lodgement_date = resultSet2.getString("lodgement_date");
-            System.out.printf("%-30s %-25s %-15d %-5d %-5s %-10s\n", product_model, salesman, quantity, unit_price, estimate_delivery_date, lodgement_date);
+            System.out.printf("%-35s %-25s %-15d %-5d %-5s %-10s\n", product_model, salesman, quantity, unit_price, estimate_delivery_date, lodgement_date);
             resultSet2.next();
         }
 
