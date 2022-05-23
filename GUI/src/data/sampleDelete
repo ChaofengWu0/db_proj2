@@ -1,0 +1,11 @@
+Please input the table name you want to delete
+Please choose the constrains
+If the input is null,it means that this attribute doesn't have a constraint
+If the the type of column is 'age' 'unit_price' 'purchase_price' 'quantity' 'id',please input two numbers a,b meaning [a,b]
+Otherwise, please input a string to satisfy your attempt.
+And please input 'stop' to finish the input
+
+
+
+sample:
+order_table	null	CSE0000102	AntennaSystem39	null	null	null	11510209	stop
