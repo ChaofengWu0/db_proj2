@@ -1,0 +1,8 @@
+1、返回enterprise的订单（买的每个model数量，单价，总金额）
+Huawei
+2、每个center的当前销售情况
+America
+3、update合同状态（当一个合同只要有一个lodgement_date都大于等于nowTime,就变成unfinished）
+2022-01-01
+4、查询staff的业绩（salesman返回order数和总金额；contract_manager返回contract数和业务合作的企业数；director返回负责center的销售情况；supply_staff返回model，purchase_price,unit_price,差价，quantity）
+11911120
