@@ -12,25 +12,25 @@ public class DatabaseUtil {
 
     public DatabaseUtil() {
         try {
-            JAXPConfigurator.configure("src/proxool.xml", false);
+            JAXPConfigurator.configure("C:\\Users\\ll\\Desktop\\University\\dataBase\\proj\\db_proj2\\src\\proxool.xml", false);
         } catch (ProxoolException e) {
             e.printStackTrace();
         }
     }
 
-    public String getConnectState() {
-        try {
-            SnapshotIF snapshotIF = ProxoolFacade.getSnapshot("postgres", true);
-            int curActiveCnt = snapshotIF.getActiveConnectionCount();
-            int availableCnt = snapshotIF.getAvailableConnectionCount();
-            int maxCnt = snapshotIF.getMaximumConnectionCount();
-            return String.format("--- Active:%d\tAvailable:%d  \tMax:%d ---",
-                    curActiveCnt, availableCnt, maxCnt);
-        } catch (ProxoolException e) {
-            e.printStackTrace();
-        }
-        return "visit error";
-    }
+//    public String getConnectState() {
+//        try {
+//            SnapshotIF snapshotIF = ProxoolFacade.getSnapshot("postgres", true);
+//            int curActiveCnt = snapshotIF.getActiveConnectionCount();
+//            int availableCnt = snapshotIF.getAvailableConnectionCount();
+//            int maxCnt = snapshotIF.getMaximumConnectionCount();
+//            return String.format("--- Active:%d\tAvailable:%d  \tMax:%d ---",
+//                    curActiveCnt, availableCnt, maxCnt);
+//        } catch (ProxoolException e) {
+//            e.printStackTrace();
+//        }
+//        return "visit error";
+//    }
 
     public static DatabaseUtil getInstance() {
         return instance;
@@ -40,6 +40,7 @@ public class DatabaseUtil {
         Connection con = null;
         try {
             con = DriverManager.getConnection("proxool.postgres");
+//            System.out.println(this.getConnectState());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -47,16 +48,14 @@ public class DatabaseUtil {
         return con;
     }
 
-    public void closeConnection(Connection con, PreparedStatement preparedStatement) {
+
+    public void closeConnection(Connection con) {
         try {
-            if (preparedStatement != null) {
-                preparedStatement.close();
-            }
-            if (con != null) {
-                con.close();
-            }
+            con.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        Thread.interrupted();
+//        System.out.println("------Thread " + Thread.currentThread().getId() + " close DB!------");
     }
 }
