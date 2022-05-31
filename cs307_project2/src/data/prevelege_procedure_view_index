@@ -1,0 +1,5 @@
+Prevelege：
+supplier只能对store进行插入
+(delete)order_table	null	CSE0000101	null	null	null	null	null	stop
+
+procedure:在发现一个合同的lodgement_date>nowTime时修改状态

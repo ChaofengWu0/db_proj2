@@ -1,0 +1,33 @@
+Please input the table name you want to select
+Now,please choose the column you want
+If you want to select the column, input the name of the column
+Or you want to select all columns,please input *
+And if you finished the selection please input 'stop'
+And here is the column name of the table
+
+id   contract_number   product_model   quantity   estimated_date   lodgement_date   salesman_number
+Please choose the constrains
+If the input is null,it means that this attribute doesn't have a constraint
+If the the type of column is 'age' 'unit_price' 'purchase_price' 'quantity' 'id',please input two numbers a,b meaning [a,b]
+Otherwise, please input a string to satisfy your attempt.
+And please input 'stop' to finish the input
+
+id     contract_number     product_model     quantity     estimated_date     lodgement_date     salesman_number
+
+
+
+
+
+
+
+sample:
+(单列)order_table	null	contract_number	null	quantity	estimated_date	lodgement_date	salesman_number	stop	null	CSE0000101	null	null	null	null	null	stop
+(多列)order_table	null	contract_number	product_model	quantity	estimated_date	lodgement_date	salesman_number	stop	null	CSE0000101	NotebookAccessoriesA7	null	null	null	11512308	stop
+
+
+
+
+
+
+
+order_table	null	contract_number	product_model	null	null	null	salesman_number	stop	null	CSE0000101	NotebookAccessoriesA7	null	null	null	11512308	stop
